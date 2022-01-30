@@ -1,0 +1,41 @@
+<script src="stfs.js"></script>
+<script>
+function OpenFile(event) {
+    var input = event.target;
+    var reader = new FileReader();
+    reader.onload = function(){
+       STFS_LoadPackage(reader.result);
+    };
+    reader.readAsArrayBuffer(input.files[0]);
+};
+function Reset() {
+    STFS_Reset();
+	document.getElementById("filelist").innerHTML = "";
+	document.getElementById("metadata").innerHTML = "";
+}
+function ReadFileList() {
+	document.getElementById("filelist").innerHTML = "";
+    STFS_InitFS();
+	var fileTable = STFS_GetFileTable();
+	fileTable.forEach((f) => {
+	    if ((f.flags & 2) == 2) return;
+	    document.getElementById("filelist").innerHTML += STFS_GetFilePath(f) + " - <a href='" + STFS_ReadFile(f) + "' download='" + f.fileName +"'>download</a><br>";
+	});
+}
+function ReadMetadata() {
+    var packageName = STFS_GetPackageName();
+	var titleID = STFS_GetTitleID();
+	var contentType = STFS_GetContentType();
+    var metaString = "";
+	metaString += `Install Path: Content/${titleID.toString(16).padStart(8, '0').toUpperCase()}/${contentType.toString(16).padStart(8, '0').toUpperCase()}/${packageName.length > 40 ? STFS_GetContentID() : packageName}<br>`;
+	metaString += `File Type: ${STFS_Name_FileType(STFS_GetFileType())}<br>`;
+	metaString += `Package Name: ${packageName}<br>`;
+	metaString += `Title: ${STFS_GetTitleName()} (${titleID.toString(16)})<br>`;
+	metaString += `Content Type: ${STFS_Name_ContentType(contentType)}<br>`;
+	metaString += `<img src="${STFS_GetPackageThumb()}"></img> <img src="${STFS_GetTitleThumb()}"></img>`;
+	document.getElementById("metadata").innerHTML = metaString;
+}
+</script>
+Open Local File: <input type='file' accept='application/x-octet-stream' onchange='OpenFile(event)'><br>If nothing happens, click reset.<br> <button onClick="ReadMetadata()">Read Metadata</button> <button onClick="ReadFileList()">Read File List</button> <button onClick="Reset()">Reset</button><br>
+<span id="metadata"></span><br>
+<span id="filelist"></span>
